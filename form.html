@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSN Upload ETA/ETE</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/upload.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="container py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <img src="{% static 'img/logo.png' %}" alt="Logo" class="me-2" style="height: 50px;">
+                    <h1 class="h4 mb-0">ETA/ETE Analyzer</h1>
+                </div>
+                <div>
+                    <span class="badge bg-primary">Sistema de Importação</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Seleção de Tipo</a></li>
+                        <li class="breadcrumb-item active" id="breadcrumb-tipo">Entrada Manual de DQO</li>
+                    </ol>
+                </nav>
+                <!-- Page Title -->
+                <!-- Atualizando título para refletir entrada manual -->
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold">Entrada Manual de Dados DQO</h2>
+                    <p class="text-muted">Insira o valor numérico de DQO do dia para processamento no sistema</p>
+                </div>
+
+                <!-- Substituindo área de upload por formulário de entrada manual -->
+                <!-- Input Area -->
+                <div class="upload-area p-5 mb-4">
+                    <div class="mb-4 text-center">
+                        <i class="bi bi-calculator upload-icon"></i>
+                    </div>
+                    <h4 class="mb-3 text-center">Insira o Valor de DQO</h4>
+                    <p class="drag-text mb-4 text-center">Digite o valor numérico medido hoje (mg/L)</p>
+                    
+                    <form id="dqoForm" method="POST" action="">
+                        {% csrf_token %}
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="mb-4">
+                                    <label for="dqoValue" class="form-label fw-bold">Valor de DQO (mg/L)</label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text"><i class="bi bi-droplet-fill"></i></span>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="dqoValue" 
+                                               name="dqo_value"
+                                               placeholder="Ex: 350.5" 
+                                               step="0.01" 
+                                               min="0"
+                                               required>
+                                        <span class="input-group-text">mg/L</span>
+                                    </div>
+                                    <div class="form-text">Insira o valor medido no laboratório</div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="measurementDate" class="form-label fw-bold">Data da Medição</label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               id="measurementDate" 
+                                               name="measurement_date"
+                                               required>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="observations" class="form-label fw-bold">Observações (Opcional)</label>
+                                    <textarea class="form-control" 
+                                              id="observations" 
+                                              name="observations"
+                                              rows="3" 
+                                              placeholder="Adicione observações sobre a medição, condições climáticas, etc."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="bi bi-check-circle me-2"></i>Enviar Dados
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="submitProgress" class="progress mt-4 d-none">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    
+                    <div id="submitSuccess" class="alert alert-success mt-3 d-none">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        Dados enviados com sucesso! O processamento foi iniciado.
+                    </div>
+                    
+                    <div id="submitError" class="alert alert-danger mt-3 d-none">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span id="errorMessage">Ocorreu um erro durante o envio. Por favor, tente novamente.</span>
+                    </div>
+                </div>
+
+                <!-- Chart Display -->
+                {% if chart_url %}
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Gráfico Gerado</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{{ chart_url }}" class="img-fluid" alt="Gráfico de Entrada e Saída">
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Atualizando instruções para entrada manual -->
+                <!-- Instructions -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Instruções para Entrada de Dados</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="step-number">1</span>
+                                <h6 class="mb-0">Realize a medição</h6>
+                            </div>
+                            <p class="text-muted ms-4">Realize a análise laboratorial de DQO seguindo os protocolos estabelecidos pela empresa.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="step-number">2</span>
+                                <h6 class="mb-0">Insira o valor medido</h6>
+                            </div>
+                            <p class="text-muted ms-4">Digite o valor numérico de DQO obtido na análise. O sistema aceita valores decimais.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="step-number">3</span>
+                                <h6 class="mb-0">Selecione a data</h6>
+                            </div>
+                            <p class="text-muted ms-4">Informe a data em que a medição foi realizada para registro correto no sistema.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="step-number">4</span>
+                                <h6 class="mb-0">Adicione observações</h6>
+                            </div>
+                            <p class="text-muted ms-4">Se necessário, adicione observações relevantes sobre as condições da medição ou qualquer anomalia observada.</p>
+                        </div>
+                        
+                        <div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="step-number">5</span>
+                                <h6 class="mb-0">Envie os dados</h6>
+                            </div>
+                            <p class="text-muted ms-4">Clique em "Enviar Dados" para processar as informações. O sistema gerará automaticamente os gráficos e relatórios necessários.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
