@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Análises pH - Sistema Empresarial</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- DateRangePicker -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .dashboard-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .dashboard-card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-icon {
+            font-size: 2.5rem;
+        }
+        .sidebar {
+            background-color: #343a40;
+            color: #ffffff;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        .sidebar-collapsed {
+            margin-left: -250px;
+        }
+        .content {
+            margin-left: 250px;
+            transition: all 0.3s;
+        }
+        .content-expanded {
+            margin-left: 0;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            border-radius: 5px;
+            margin: 5px 10px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .nav-link i {
+            margin-right: 10px;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        .toggle-sidebar {
+            cursor: pointer;
+        }
+        .stat-card {
+            border-left: 4px solid;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card.primary {
+            border-left-color: #0d6efd;
+        }
+        .stat-card.success {
+            border-left-color: #198754;
+        }
+        .stat-card.danger {
+            border-left-color: #dc3545;
+        }
+        .stat-card.warning {
+            border-left-color: #ffc107;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .filter-card {
+            background-color: #f8f9fa;
+            border: none;
+        }
+        .date-filter {
+            cursor: pointer;
+            background-color: #fff;
+        }
+        .badge-ph {
+            font-size: 0.9rem;
+            padding: 0.5rem;
+        }
+        .badge-ph.ideal {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        .badge-ph.acceptable {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+        .badge-ph.alert {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            .sidebar.active {
+                margin-left: 0;
+            }
+            .content {
+                margin-left: 0;
+            }
+            .content-expanded {
+                margin-left: 0;
+            }
+        }
+        .dropdown-toggle::after {
+            display: none;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header d-flex align-items-center">
+            <i class="bi bi-bar-chart-fill me-2" style="font-size: 1.5rem;"></i>
+            <h5 class="mb-0">EmpresaTech</h5>
+        </div>
+        <div class="pt-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-droplet-fill"></i> Análises DQO
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">
+                        <i class="bi bi-thermometer-half"></i> Análises pH
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-file-earmark-text"></i> Relatórios
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-2">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div>
+                        <small class="d-block">Usuário</small>
+                        <small class="text-muted">Admin</small>
+                    </div>
+                </div>
+                <div>
+                    <a href="#" class="text-white" title="Sair">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div id="content" class="content">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container-fluid">
+                <button type="button" id="sidebarCollapse" class="btn toggle-sidebar">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell position-relative">
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    2
+                                </span>
+                            </i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                            <li><h6 class="dropdown-header">Notificações</h6></li>
+                            <li><a class="dropdown-item" href="#">Nova análise pH disponível</a></li>
+                            <li><a class="dropdown-item" href="#">Alerta: Valor de pH fora do padrão</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">Ver todas</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown ms-3">
+                        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar me-2">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <span class="d-none d-md-inline">Administrador</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configurações</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container-fluid py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Dashboard de Análises pH</h2>
+                <div>
+                    <button class="btn btn-outline-secondary me-2" id="exportBtn">
+                        <i class="bi bi-download me-1"></i> Exportar
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Nova Análise
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card filter-card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo de Filtro</label>
+                            <select class="form-select" id="filterType">
+                                <option value="day">Dia</option>
+                                <option value="month" selected>Mês</option>
+                                <option value="year">Ano</option>
+                                <option value="custom">Período Personalizado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="dayFilterContainer" style="display: none;">
+                            <label class="form-label">Selecione o Dia</label>
+                            <input type="date" class="form-control" id="dayFilter">
+                        </div>
+                        <div class="col-md-3" id="monthFilterContainer">
+                            <label class="form-label">Selecione o Mês</label>
+                            <input type="month" class="form-control" id="monthFilter">
+                        </div>
+                        <div class="col-md-3" id="yearFilterContainer" style="display: none;">
+                            <label class="form-label">Selecione o Ano</label>
+                            <input type="number" class="form-control" id="yearFilter" min="2020" max="2030" placeholder="2024">
+                        </div>
+                        <div class="col-md-4" id="customFilterContainer" style="display: none;">
+                            <label class="form-label">Período Personalizado</label>
+                            <div class="input-group date-filter">
+                                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                                <input type="text" class="form-control" id="daterange" placeholder="Selecione o período">
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" id="applyFilter">
+                                <i class="bi bi-funnel me-1"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card primary h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-value" id="totalRegistros">0</div>
+                                    <div class="stat-label">Total de Registros</div>
+                                </div>
+                                <div class="card-icon text-primary">
+                                    <i class="bi bi-clipboard-data"></i>
+                                </div>
+                            </div>
+                            <div class="progress mt-3" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">Medições no período</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card success h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-value" id="phMedio">0.0</div>
+                                    <div class="stat-label">pH Médio</div>
+                                </div>
+                                <div class="card-icon text-success">
+                                    <i class="bi bi-thermometer-half"></i>
+                                </div>
+                            </div>
+                            <div class="progress mt-3" style="height: 5px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">Faixa ideal: 6.5 - 8.5</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card danger h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-value" id="phMaximo">0.0</div>
+                                    <div class="stat-label">pH Máximo</div>
+                                </div>
+                                <div class="card-icon text-danger">
+                                    <i class="bi bi-arrow-up-circle"></i>
+                                </div>
+                            </div>
+                            <div class="progress mt-3" style="height: 5px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">Maior valor registrado</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card warning h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-value" id="phMinimo">0.0</div>
+                                    <div class="stat-label">pH Mínimo</div>
+                                </div>
+                                <div class="card-icon text-warning">
+                                    <i class="bi bi-arrow-down-circle"></i>
+                                </div>
+                            </div>
+                            <div class="progress mt-3" style="height: 5px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">Menor valor registrado</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-8">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Evolução Temporal do pH</h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="showLimits" checked>
+                                <label class="form-check-label" for="showLimits">Mostrar Limites</label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="phLineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Distribuição por Faixa</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="phDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Média Diária de pH</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="phBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Últimas Medições</h5>
+                            <button class="btn btn-sm btn-outline-primary" id="refreshTable">
+                                <i class="bi bi-arrow-clockwise"></i> Atualizar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table table-hover">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>pH</th>
+                                            <th>Data/Hora</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="phTableBody">
+                                        <!-- Dados serão inseridos via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Moment.js -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/pt-br.js"></script>
+    <!-- DateRangePicker -->
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    
+    <script>
+        // Configuração do Moment.js para português
+        moment.locale('pt-br');
+
+        // Variáveis globais para os gráficos
+        let phLineChart, phDistributionChart, phBarChart;
+        let phData = [];
+
+        // Função para buscar dados da API Django
+        async function fetchPhData(filterType, filterValue) {
+            try {
+                // Substitua pela URL real da sua API Django
+                const apiUrl = `/api/ph-registros/?filter_type=${filterType}&filter_value=${filterValue}`;
+                
+                // Para teste, use dados simulados
+                // Descomente a linha abaixo quando a API estiver pronta
+                // const response = await fetch(apiUrl);
+                // const data = await response.json();
+                
+                // Dados simulados para demonstração
+                const data = generateSampleData(filterType, filterValue);
+                return data;
+            } catch (error) {
+                console.error('[v0] Erro ao buscar dados:', error);
+                return [];
+            }
+        }
+
+        // Função para gerar dados de exemplo
+        function generateSampleData(filterType, filterValue) {
+            const data = [];
+            let days = 30;
+            
+            if (filterType === 'day') days = 1;
+            else if (filterType === 'month') days = 30;
+            else if (filterType === 'year') days = 365;
+            
+            const now = new Date();
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                
+                // Gerar 1-5 medições por dia
+                const measurementsPerDay = Math.floor(Math.random() * 5) + 1;
+                for (let j = 0; j < measurementsPerDay; j++) {
+                    const measurementDate = new Date(date);
+                    measurementDate.setHours(Math.floor(Math.random() * 24));
+                    measurementDate.setMinutes(Math.floor(Math.random() * 60));
+                    
+                    data.push({
+                        id: data.length + 1,
+                        ph_valor: (Math.random() * 4 + 5.5).toFixed(2), // pH entre 5.5 e 9.5
+                        data_medicao: measurementDate.toISOString()
+                    });
+                }
+            }
+            
+            return data;
+        }
+
+        // Função para atualizar estatísticas
+        function updateStatistics(data) {
+            const totalRegistros = data.length;
+            const phValues = data.map(d => parseFloat(d.ph_valor));
+            const phMedio = (phValues.reduce((a, b) => a + b, 0) / totalRegistros).toFixed(2);
+            const phMaximo = Math.max(...phValues).toFixed(2);
+            const phMinimo = Math.min(...phValues).toFixed(2);
+
+            document.getElementById('totalRegistros').textContent = totalRegistros;
+            document.getElementById('phMedio').textContent = phMedio;
+            document.getElementById('phMaximo').textContent = phMaximo;
+            document.getElementById('phMinimo').textContent = phMinimo;
+        }
+
+        // Função para classificar pH
+        function classifyPh(phValue) {
+            const ph = parseFloat(phValue);
+            if (ph >= 6.5 && ph <= 8.5) {
+                return { class: 'ideal', label: 'Ideal', color: '#198754' };
+            } else if (ph >= 6.0 && ph <= 9.0) {
+                return { class: 'acceptable', label: 'Aceitável', color: '#ffc107' };
+            } else {
+                return { class: 'alert', label: 'Alerta', color: '#dc3545' };
+            }
+        }
+
+        // Função para atualizar gráfico de linha
+        function updateLineChart(data) {
+            const sortedData = data.sort((a, b) => new Date(a.data_medicao) - new Date(b.data_medicao));
+            const labels = sortedData.map(d => moment(d.data_medicao).format('DD/MM HH:mm'));
+            const values = sortedData.map(d => parseFloat(d.ph_valor));
+
+            if (phLineChart) {
+                phLineChart.destroy();
+            }
+
+            const ctx = document.getElementById('phLineChart').getContext('2d');
+            const showLimits = document.getElementById('showLimits').checked;
+
+            const datasets = [{
+                label: 'pH',
+                data: values,
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4,
+                fill: true
+            }];
+
+            if (showLimits) {
+                datasets.push(
+                    {
+                        label: 'Limite Superior (8.5)',
+                        data: Array(values.length).fill(8.5),
+                        borderColor: '#dc3545',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Limite Inferior (6.5)',
+                        data: Array(values.length).fill(6.5),
+                        borderColor: '#dc3545',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    }
+                );
+            }
+
+            phLineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 5,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'pH'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Função para atualizar gráfico de distribuição
+        function updateDistributionChart(data) {
+            const phValues = data.map(d => parseFloat(d.ph_valor));
+            
+            const ranges = {
+                'Ácido (<6.5)': 0,
+                'Ideal (6.5-8.5)': 0,
+                'Alcalino (>8.5)': 0
+            };
+
+            phValues.forEach(ph => {
+                if (ph < 6.5) ranges['Ácido (<6.5)']++;
+                else if (ph <= 8.5) ranges['Ideal (6.5-8.5)']++;
+                else ranges['Alcalino (>8.5)']++;
+            });
+
+            if (phDistributionChart) {
+                phDistributionChart.destroy();
+            }
+
+            const ctx = document.getElementById('phDistributionChart').getContext('2d');
+            phDistributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(ranges),
+                    datasets: [{
+                        data: Object.values(ranges),
+                        backgroundColor: [
+                            '#ffc107',
+                            '#198754',
+                            '#dc3545'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Função para atualizar gráfico de barras
+        function updateBarChart(data) {
+            // Agrupar por dia e calcular média
+            const dailyData = {};
+            data.forEach(d => {
+                const day = moment(d.data_medicao).format('DD/MM');
+                if (!dailyData[day]) {
+                    dailyData[day] = { sum: 0, count: 0 };
+                }
+                dailyData[day].sum += parseFloat(d.ph_valor);
+                dailyData[day].count++;
+            });
+
+            const labels = Object.keys(dailyData).sort((a, b) => {
+                const dateA = moment(a, 'DD/MM');
+                const dateB = moment(b, 'DD/MM');
+                return dateA - dateB;
+            });
+            const values = labels.map(day => (dailyData[day].sum / dailyData[day].count).toFixed(2));
+
+            if (phBarChart) {
+                phBarChart.destroy();
+            }
+
+            const ctx = document.getElementById('phBarChart').getContext('2d');
+            phBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'pH Médio Diário',
+                        data: values,
+                        backgroundColor: '#0d6efd',
+                        borderColor: '#0d6efd',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 5,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'pH Médio'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Função para atualizar tabela
+        function updateTable(data) {
+            const tbody = document.getElementById('phTableBody');
+            tbody.innerHTML = '';
+
+            // Mostrar últimos 10 registros
+            const recentData = data.slice(-10).reverse();
+
+            recentData.forEach(d => {
+                const classification = classifyPh(d.ph_valor);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${d.id}</td>
+                    <td><strong>${d.ph_valor}</strong></td>
+                    <td>${moment(d.data_medicao).format('DD/MM/YYYY HH:mm')}</td>
+                    <td><span class="badge badge-ph ${classification.class}">${classification.label}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Função para atualizar todos os componentes
+        async function updateDashboard() {
+            const filterType = document.getElementById('filterType').value;
+            let filterValue = '';
+
+            switch (filterType) {
+                case 'day':
+                    filterValue = document.getElementById('dayFilter').value;
+                    break;
+                case 'month':
+                    filterValue = document.getElementById('monthFilter').value;
+                    break;
+                case 'year':
+                    filterValue = document.getElementById('yearFilter').value;
+                    break;
+                case 'custom':
+                    filterValue = document.getElementById('daterange').value;
+                    break;
+            }
+
+            phData = await fetchPhData(filterType, filterValue);
+            
+            if (phData.length > 0) {
+                updateStatistics(phData);
+                updateLineChart(phData);
+                updateDistributionChart(phData);
+                updateBarChart(phData);
+                updateTable(phData);
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('sidebarCollapse').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('sidebar-collapsed');
+            document.getElementById('content').classList.toggle('content-expanded');
+        });
+
+        document.getElementById('filterType').addEventListener('change', function() {
+            const filterType = this.value;
+            
+            document.getElementById('dayFilterContainer').style.display = 'none';
+            document.getElementById('monthFilterContainer').style.display = 'none';
+            document.getElementById('yearFilterContainer').style.display = 'none';
+            document.getElementById('customFilterContainer').style.display = 'none';
+
+            switch (filterType) {
+                case 'day':
+                    document.getElementById('dayFilterContainer').style.display = 'block';
+                    break;
+                case 'month':
+                    document.getElementById('monthFilterContainer').style.display = 'block';
+                    break;
+                case 'year':
+                    document.getElementById('yearFilterContainer').style.display = 'block';
+                    break;
+                case 'custom':
+                    document.getElementById('customFilterContainer').style.display = 'block';
+                    break;
+            }
+        });
+
+        document.getElementById('applyFilter').addEventListener('click', updateDashboard);
+
+        document.getElementById('showLimits').addEventListener('change', function() {
+            updateLineChart(phData);
+        });
+
+        document.getElementById('refreshTable').addEventListener('click', updateDashboard);
+
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            // Implementar exportação para CSV ou PDF
+            alert('Funcionalidade de exportação em desenvolvimento');
+        });
+
+        // Inicializar DateRangePicker
+        $('#daterange').daterangepicker({
+            locale: {
+                format: 'DD/MM/YYYY',
+                separator: ' - ',
+                applyLabel: 'Aplicar',
+                cancelLabel: 'Cancelar',
+                fromLabel: 'De',
+                toLabel: 'Até',
+                customRangeLabel: 'Personalizado',
+                weekLabel: 'S',
+                daysOfWeek: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                firstDay: 0
+            }
+        });
+
+        // Definir valores padrão para os filtros
+        document.getElementById('dayFilter').valueAsDate = new Date();
+        document.getElementById('monthFilter').value = moment().format('YYYY-MM');
+        document.getElementById('yearFilter').value = new Date().getFullYear();
+
+        // Carregar dados iniciais
+        updateDashboard();
+    </script>
+</body>
+</html>
