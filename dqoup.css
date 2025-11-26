@@ -1,0 +1,103 @@
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.selection-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.selection-card:hover {
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 3.5rem;
+    color: #0d6efd;
+}
+
+.header-logo {
+    height: 40px;
+    margin-right: 10px;
+}
+
+.footer {
+    background-color: #343a40;
+    color: #ffffff;
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
+
+.card-link:hover {
+    color: inherit;
+}
+
+.selection-header {
+    position: relative;
+    background-color: #e9ecef;
+    padding: 2rem 0;
+    margin-bottom: 3rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.selection-header::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: #e9ecef;
+    transform-origin: center;
+    transform: translateX(-50%) rotate(45deg);
+    z-index: -1;
+}
+
+.dqo-icon {
+    color: #198754;
+}
+
+.ph-icon {
+    color: #dc3545;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-control-lg:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-success:hover {
+    background-color: #157347;
+    border-color: #146c43;
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+.d-none {
+    display: none !important;
+}
